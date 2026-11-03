@@ -1,0 +1,16 @@
+{
+  "short_name": "Athenaeum",
+  "name": "Athenaeum Fine Books & Online Bookstore",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23800020'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z'/></svg>",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FDFBF7",
+  "theme_color": "#800020",
+  "display": "standalone"
+}
+

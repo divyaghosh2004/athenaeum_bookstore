@@ -1,0 +1,41 @@
+{
+  "name": "online-book-store",
+  "version": "1.0.0",
+  "description": "Athenaeum — Professional Full-Stack Online Bookstore Mini Project (React + Node + Express + MongoDB)",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently --kill-others \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm install && npm run build",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "seed": "npm run seed --prefix server",
+    "test": "npm test --prefix server",
+    "server": "npm run start --prefix server",
+    "client": "npm run dev --prefix client",
+    "start": "npm run server"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.12.1",
+    "multer": "^1.4.5-lts.1",
+    "serverless-http": "^4.0.0"
+  },
+  "keywords": [
+    "online-bookstore",
+    "react",
+    "express",
+    "mongodb",
+    "mongoose",
+    "jwt",
+    "indexeddb"
+  ],
+  "author": "Full-Stack Web Development Mini Project",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

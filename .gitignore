@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production build outputs
+dist/
+client/dist/
+
+# Environment variables
+.env
+.env.local
+server/.env
+client/.env
+
+# Logs and system
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# Vercel output
+.vercel
+
+# Uploaded user avatars in dev
+server/uploads/*
+!server/uploads/.gitkeep
+
