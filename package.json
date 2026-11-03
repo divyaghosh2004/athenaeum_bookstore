@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently --kill-others \"npm run server\" \"npm run client\"",
-    "build": "cd client && npm install && npm run build",
+    "build": "npm install --prefix server",
+    "build:client": "cd client && npm install --include=dev && npm run build",
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
     "seed": "npm run seed --prefix server",
     "test": "npm test --prefix server",
     "server": "npm run start --prefix server",
     "client": "npm run dev --prefix client",
-    "start": "npm run server"
+    "start": "node server/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
