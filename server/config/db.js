@@ -19,8 +19,8 @@ export const connectDB = async () => {
     console.log('✓ Successfully connected to MongoDB Server.');
     return mongoose.connection;
   } catch (err) {
-    // If running in Vercel/Netlify serverless or production, do not attempt to download embedded binary
-    if (process.env.VERCEL || process.env.NETLIFY || process.env.NODE_ENV === 'production') {
+    // If running in cloud hosting (Render, Vercel, Netlify) or production, do not attempt to download embedded binary
+    if (process.env.RENDER || process.env.VERCEL || process.env.NETLIFY || process.env.NODE_ENV === 'production') {
       console.error('Fatal: Cannot connect to MongoDB Atlas in production:', err.message);
       throw err;
     }
