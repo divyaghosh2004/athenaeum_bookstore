@@ -131,7 +131,7 @@ export default function CartPage() {
             Order Confirmed!
           </h1>
           <p style={{ fontSize: '15px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-            Thank you for ordering with Athenaeum Bookstore. Your order has been recorded in our MongoDB database.
+            Thank you for ordering with Athenaeum Bookstore. Your order has been recorded.
           </p>
 
           {/* Demo Simulation Badge */}
