@@ -160,14 +160,11 @@ export default function LibraryPage() {
           <Link to="/" className="btn btn-secondary" style={{ fontSize: '13px' }}>
             <Compass size={16} /> Explore More Titles
           </Link>
-          <Link to="/offline" className="btn btn-outline" style={{ fontSize: '13px' }}>
-            <BookOpen size={16} /> Claim Free Books
-          </Link>
         </div>
       </div>
 
       {loading ? (
-        <LoadingSpinner text="Retrieving your digital volumes from MongoDB..." />
+        <LoadingSpinner text="Loading your library..." onRetry={fetchLibrary} />
       ) : libraryItems.length > 0 ? (
         <div style={{
           display: 'grid',

@@ -5,7 +5,6 @@ import {
   Home,
   Library,
   ShoppingCart,
-  BookDown,
   User,
   LogOut,
   Search,
@@ -36,7 +35,6 @@ export default function Navbar() {
     { name: 'Home', path: '/', icon: Home },
     { name: 'Library', path: '/library', icon: Library },
     { name: 'Cart', path: '/cart', icon: ShoppingCart, badge: itemCount },
-    { name: 'E-Books', path: '/ebooks', icon: BookDown },
     { name: 'My Account', path: '/account', icon: User }
   ];
 

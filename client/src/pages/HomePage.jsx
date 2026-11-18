@@ -17,6 +17,7 @@ import BookCard from '../components/BookCard';
 import BookModal from '../components/BookModal';
 import BookReaderModal from '../components/BookReaderModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BookSkeletonGrid from '../components/BookSkeletonGrid';
 import EmptyState from '../components/EmptyState';
 import { formatINR } from '../utils/currency';
 
@@ -41,6 +42,7 @@ export default function HomePage() {
   });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(false);
   const [sectionsLoading, setSectionsLoading] = useState(true);
 
   // Modal states
@@ -78,35 +80,39 @@ export default function HomePage() {
   }, []);
 
   // Fetch catalog books with filters
-  useEffect(() => {
-    const fetchCatalog = async () => {
-      setLoading(true);
-      try {
-        const params = {};
-        if (activeCategory && activeCategory !== 'All') {
-          params.category = activeCategory;
-        }
-        if (searchQueryParam) {
-          params.search = searchQueryParam;
-        }
-        if (sortBy) {
-          params.sort = sortBy;
-        }
-        if (activeTab !== 'all') {
-          params.collection = activeTab;
-        }
-
-        const res = await api.get('/books', { params });
-        if (res.data.success) {
-          setBooks(res.data.books);
-        }
-      } catch (err) {
-        console.warn('Catalog fetch error:', err.message);
-      } finally {
-        setLoading(false);
+  const fetchCatalog = async () => {
+    setLoading(true);
+    setCatalogError(false);
+    try {
+      const params = {};
+      if (activeCategory && activeCategory !== 'All') {
+        params.category = activeCategory;
       }
-    };
+      if (searchQueryParam) {
+        params.search = searchQueryParam;
+      }
+      if (sortBy) {
+        params.sort = sortBy;
+      }
+      if (activeTab !== 'all') {
+        params.collection = activeTab;
+      }
 
+      const res = await api.get('/books', { params });
+      if (res.data.success && Array.isArray(res.data.books)) {
+        setBooks(res.data.books);
+      } else {
+        setCatalogError(true);
+      }
+    } catch (err) {
+      console.warn('Catalog fetch error:', err.message);
+      setCatalogError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCatalog();
   }, [activeCategory, searchQueryParam, sortBy, activeTab]);
 
@@ -571,7 +577,17 @@ export default function HomePage() {
           {/* Catalog Grid */}
           <div id="catalog-section">
             {loading ? (
-              <LoadingSpinner text="Retrieving curated books from MongoDB..." />
+              <div style={{ padding: '8px 0' }}>
+                <LoadingSpinner text="Loading your books..." onRetry={fetchCatalog} />
+                <BookSkeletonGrid count={8} />
+              </div>
+            ) : catalogError ? (
+              <EmptyState
+                title="Unable to Load Book Collection"
+                description="We experienced a temporary connection issue while loading the book catalog. Please click below to try again."
+                actionText="Retry Loading Books"
+                onAction={fetchCatalog}
+              />
             ) : books.length > 0 ? (
               <div className="books-grid">
                 {books.map((book) => (

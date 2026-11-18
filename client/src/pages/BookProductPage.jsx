@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Star,
   ShoppingCart,
   Zap,
   BookOpen,
-  Download,
   Share2,
   ShieldCheck,
   Truck,
@@ -23,7 +22,6 @@ import api from '../services/api';
 import { formatINR } from '../utils/currency';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
-import { saveOfflineBook, getOfflineBooks } from '../services/indexedDB';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 import BookReaderModal from '../components/BookReaderModal';
@@ -45,72 +43,73 @@ export default function BookProductPage() {
   const [selectedFormat, setSelectedFormat] = useState('paperback'); // 'paperback', 'hardcover', 'digital'
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'details', 'author', 'reviews'
   const [readerOpen, setReaderOpen] = useState(false);
-  const [isSavedOffline, setIsSavedOffline] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Fetch Book Data
-  useEffect(() => {
+  const fetchBook = useCallback(async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setLoading(true);
     setError(false);
     setQuantity(1);
 
-    const fetchBook = async () => {
-      try {
-        const res = await api.get(`/books/${id}`);
-        if (res.data.success && res.data.book) {
-          setBook(res.data.book);
-          setRelatedBooks(Array.isArray(res.data.related) ? res.data.related : []);
-
-          // Check if already downloaded offline
-          try {
-            const offlineList = await getOfflineBooks();
-            const exists = (offlineList || []).some(item => String(item.id) === String(res.data.book._id));
-            setIsSavedOffline(exists);
-          } catch {
-            // Ignore indexedDB check errors
-          }
-        } else {
-          throw new Error('Book not found in direct query');
-        }
-      } catch (err) {
-        console.warn('Direct book fetch note, trying catalog search fallback:', err.message);
-        // Fallback: search catalog for matching ID or title
-        try {
-          const allRes = await api.get('/books', { params: { limit: 100 } });
-          if (allRes.data.success && Array.isArray(allRes.data.books)) {
-            const found = allRes.data.books.find(
-              b => String(b._id) === String(id) || String(b.id) === String(id)
-            );
-            if (found) {
-              setBook(found);
-              setRelatedBooks(
-                allRes.data.books
-                  .filter(b => b.category === found.category && String(b._id) !== String(id))
-                  .slice(0, 4)
-              );
-              setError(false);
-              return;
-            }
-          }
-        } catch (fbErr) {
-          console.error('Catalog fallback failed:', fbErr);
-        }
-        setError(true);
-      } finally {
-        setLoading(false);
+    try {
+      const res = await api.get(`/books/${id}`);
+      if (res.data.success && res.data.book) {
+        setBook(res.data.book);
+        setRelatedBooks(Array.isArray(res.data.related) ? res.data.related : []);
+      } else {
+        throw new Error('Book not found in direct query');
       }
-    };
-
-    fetchBook();
+    } catch (err) {
+      console.warn('Direct book fetch note, trying catalog search fallback:', err.message);
+      // Fallback: search catalog for matching ID or title
+      try {
+        const allRes = await api.get('/books', { params: { limit: 100 } });
+        if (allRes.data.success && Array.isArray(allRes.data.books)) {
+          const found = allRes.data.books.find(
+            b => String(b._id) === String(id) || String(b.id) === String(id)
+          );
+          if (found) {
+            setBook(found);
+            setRelatedBooks(
+              allRes.data.books
+                .filter(b => b.category === found.category && String(b._id) !== String(id))
+                .slice(0, 4)
+            );
+            setError(false);
+            return;
+          }
+        }
+      } catch (fbErr) {
+        console.error('Catalog fallback failed:', fbErr);
+      }
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchBook();
+  }, [fetchBook]);
+
+  const handleTabChange = (tabId) => {
+    if (tabId === 'reviews') {
+      setReviewsLoading(true);
+      setActiveTab('reviews');
+      setTimeout(() => {
+        setReviewsLoading(false);
+      }, 300);
+    } else {
+      setActiveTab(tabId);
+    }
+  };
 
   if (loading) {
     return (
       <div style={{ minHeight: '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <LoadingSpinner text="Retrieving book details and publisher specifications..." />
+        <LoadingSpinner text="Loading book details..." onRetry={fetchBook} />
       </div>
     );
   }
@@ -119,10 +118,10 @@ export default function BookProductPage() {
     return (
       <div className="container" style={{ padding: '80px 24px', minHeight: '60vh' }}>
         <EmptyState
-          title="Book Edition Not Found"
-          description="We couldn't locate this volume in our catalog. It may have been archived or the URL may be incorrect."
-          actionText="Browse Book Catalog"
-          onAction={() => navigate('/')}
+          title="Book Details Unavailable"
+          description="We couldn't retrieve this book from the catalog. Please check your network connection or try again."
+          actionText="Retry"
+          onAction={fetchBook}
         />
       </div>
     );
@@ -167,70 +166,6 @@ export default function BookProductPage() {
       setCopied(true);
       toast.success('Direct link copied to clipboard!');
       setTimeout(() => setCopied(false), 2500);
-    }
-  };
-
-  // Handle Offline Download
-  const handleOfflineSave = async () => {
-    setDownloading(true);
-    try {
-      await saveOfflineBook(book);
-      setIsSavedOffline(true);
-      toast.success(`"${book.title}" saved for offline reading!`);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to store book offline.');
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  // Handle direct file download to laptop/PC
-  const handleDownloadDirect = async (format = 'pdf') => {
-    setDownloadingFormat(format);
-    try {
-      const res = await api.get(`/books/${book._id}/download?format=${format}`, {
-        responseType: 'blob'
-      });
-
-      const mimeType = format === 'epub' ? 'application/epub+zip' : 'application/pdf';
-      const blob = new Blob([res.data], { type: mimeType });
-      const downloadUrl = window.URL.createObjectURL(blob);
-
-      const safeTitle = (book.title || 'ebook').replace(/[^a-zA-Z0-9_\- ]/g, '').trim().replace(/\s+/g, '_');
-      const filename = `${safeTitle}.${format}`;
-
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-
-      try {
-        const stored = JSON.parse(localStorage.getItem('athenaeum_downloaded_ebooks') || '[]');
-        if (!stored.some(item => item.bookId === book._id && item.format === format.toUpperCase())) {
-          stored.unshift({
-            bookId: book._id,
-            title: book.title,
-            author: book.author,
-            coverImage: book.coverImage,
-            category: book.category,
-            description: book.description,
-            format: format.toUpperCase(),
-            downloadedAt: new Date().toISOString()
-          });
-          localStorage.setItem('athenaeum_downloaded_ebooks', JSON.stringify(stored));
-        }
-      } catch { }
-
-      toast.success(`"${book.title}" (${format.toUpperCase()}) downloaded to your device!`);
-    } catch (err) {
-      console.error('Download error:', err);
-      toast.error(`Failed to download ${format.toUpperCase()}. Please try again.`);
-    } finally {
-      setDownloadingFormat(null);
     }
   };
 
@@ -370,8 +305,8 @@ export default function BookProductPage() {
                 />
               </div>
 
-              {/* Quick Reader & Device Download Actions */}
-              <div style={{ width: '100%', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Quick Reader Action */}
+              <div style={{ width: '100%', marginTop: '24px' }}>
                 <button
                   onClick={() => setReaderOpen(true)}
                   className="btn btn-secondary"
@@ -379,35 +314,6 @@ export default function BookProductPage() {
                 >
                   <BookOpen size={16} /> Read Sample Chapter Online
                 </button>
-
-                {/* Direct Laptop/PC E-Book Downloads */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadDirect('pdf')}
-                    disabled={downloadingFormat === 'pdf'}
-                    className="btn btn-primary"
-                    style={{ padding: '10px 8px', fontSize: '12px', fontWeight: '600' }}
-                    title="Download complete PDF book file directly to your device"
-                  >
-                    <Download size={14} /> {downloadingFormat === 'pdf' ? 'Saving...' : 'Download PDF'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadDirect('epub')}
-                    disabled={downloadingFormat === 'epub'}
-                    className="btn btn-secondary"
-                    style={{ padding: '10px 8px', fontSize: '12px', fontWeight: '600', border: '1px solid var(--border-medium)' }}
-                    title="Download complete EPUB book file directly to your device"
-                  >
-                    <Download size={14} /> {downloadingFormat === 'epub' ? 'Saving...' : 'Download EPUB'}
-                  </button>
-                </div>
-
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center' }}>
-                  ⚡ Saved to Downloads • Read offline in any reader app
-                </div>
               </div>
             </div>
 
@@ -464,7 +370,7 @@ export default function BookProductPage() {
                 href="#reviews"
                 onClick={(e) => {
                   e.preventDefault();
-                  setActiveTab('reviews');
+                  handleTabChange('reviews');
                   document.getElementById('tabs-section')?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'underline' }}
@@ -742,7 +648,7 @@ export default function BookProductPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -862,12 +768,17 @@ export default function BookProductPage() {
             {/* 4. Reviews Tab */}
             {activeTab === 'reviews' && (
               <div id="reviews">
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(250px, 320px) 1fr',
-                  gap: '40px',
-                  marginBottom: '36px'
-                }}>
+                {reviewsLoading ? (
+                  <div style={{ padding: '40px 0' }}>
+                    <LoadingSpinner text="Loading reviews..." size="sm" />
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(250px, 320px) 1fr',
+                    gap: '40px',
+                    marginBottom: '36px'
+                  }}>
                   {/* Rating Breakdown Card */}
                   <div style={{
                     backgroundColor: 'var(--bg-secondary)',
@@ -957,6 +868,7 @@ export default function BookProductPage() {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             )}
           </div>

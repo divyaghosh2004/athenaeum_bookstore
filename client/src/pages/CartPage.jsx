@@ -92,7 +92,7 @@ export default function CartPage() {
           spread: 70,
           origin: { y: 0.6 }
         });
-        toast.success('Order placed successfully! Verified in MongoDB.');
+        toast.success('Order placed successfully! Thank you for ordering with Athenaeum.');
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Checkout failed. Please check stock and try again.');
