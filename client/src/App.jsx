@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 
 // Pages
 import HomePage from './pages/HomePage';
+import BookProductPage from './pages/BookProductPage';
 import LibraryPage from './pages/LibraryPage';
 import CartPage from './pages/CartPage';
 import OfflinePage from './pages/OfflinePage';
@@ -24,6 +25,7 @@ export default function App() {
               <main style={{ flex: 1 }}>
                 <Routes>
                   <Route path="/" element={<HomePage />} />
+                  <Route path="/book/:id" element={<BookProductPage />} />
                   <Route path="/library" element={<LibraryPage />} />
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/offline" element={<OfflinePage />} />

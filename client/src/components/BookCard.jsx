@@ -1,15 +1,26 @@
 import React from 'react';
-import { ShoppingCart, Star, Eye, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ShoppingCart, Star, Eye } from 'lucide-react';
 import { formatINR } from '../utils/currency';
 import { useCart } from '../context/CartContext';
 
 export default function BookCard({ book, onViewDetails }) {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const isOutOfStock = book.stockQuantity <= 0;
+
+  const handleDetails = (e) => {
+    if (e) e.stopPropagation();
+    if (onViewDetails) {
+      onViewDetails(book);
+    } else {
+      navigate(`/book/${book._id}`);
+    }
+  };
 
   return (
     <div className="book-card">
-      <div className="book-card-cover-wrap" onClick={() => onViewDetails(book)} style={{ cursor: 'pointer' }}>
+      <div className="book-card-cover-wrap" onClick={handleDetails} style={{ cursor: 'pointer' }}>
         <img
           src={book.coverImage}
           alt={book.title}
@@ -43,7 +54,7 @@ export default function BookCard({ book, onViewDetails }) {
 
         <h3
           className="heading-serif"
-          onClick={() => onViewDetails(book)}
+          onClick={handleDetails}
           style={{
             fontSize: '15px',
             lineHeight: '1.35',
@@ -94,8 +105,8 @@ export default function BookCard({ book, onViewDetails }) {
 
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
-              onClick={() => onViewDetails(book)}
-              title="View Details"
+              onClick={handleDetails}
+              title="View Product Page"
               className="btn btn-secondary"
               style={{ padding: '8px', borderRadius: '6px' }}
             >

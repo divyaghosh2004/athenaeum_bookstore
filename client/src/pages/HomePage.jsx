@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Search,
   Sparkles,
@@ -22,6 +22,7 @@ import { formatINR } from '../utils/currency';
 
 export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Active filter states
   const activeCategory = searchParams.get('category') || 'All';
@@ -138,8 +139,12 @@ export default function HomePage() {
   };
 
   const handleOpenDetails = (book) => {
-    setSelectedBook(book);
-    setModalOpen(true);
+    if (book && book._id) {
+      navigate(`/book/${book._id}`);
+    } else {
+      setSelectedBook(book);
+      setModalOpen(true);
+    }
   };
 
   const handleOpenSampleReader = (book) => {

@@ -277,3 +277,20 @@ button {
   }
 }
 
+/* Dedicated Product Page Responsive Layout */
+@media (max-width: 1100px) {
+  .product-layout-grid {
+    grid-template-columns: 320px 1fr !important;
+  }
+  .product-layout-grid > div:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-layout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}
+

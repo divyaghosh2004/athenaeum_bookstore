@@ -251,6 +251,18 @@ export default function BookModal({ book, isOpen, onClose, onReadSample }) {
                   <Zap size={18} /> Buy Now
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate(`/book/${book._id}`);
+                }}
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '10px', fontSize: '13px' }}
+              >
+                View Full Product Page & Detailed Specifications →
+              </button>
             </div>
           </div>
         </div>
