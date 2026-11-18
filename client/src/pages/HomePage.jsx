@@ -158,9 +158,6 @@ export default function HomePage() {
     setReaderOpen(true);
   };
 
-  // Featured book for Hero section banner
-  const heroBook = sectionsData.featured[0] || books[0];
-
   return (
     <div className="animate-fade-in">
       {/* ==================== A. HERO SECTION ==================== */}
@@ -178,21 +175,6 @@ export default function HomePage() {
           }}>
             {/* Left Column: Headlines & CTAs */}
             <div>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '4px 12px',
-                borderRadius: '20px',
-                backgroundColor: 'var(--accent-burgundy-subtle)',
-                color: 'var(--accent-burgundy)',
-                fontSize: '12px',
-                fontWeight: '600',
-                marginBottom: '16px'
-              }}>
-                <Sparkles size={14} /> Curated Literary & Academic Repository
-              </div>
-
               <h1 className="heading-serif" style={{
                 fontSize: 'clamp(32px, 4.5vw, 48px)',
                 lineHeight: '1.15',
@@ -217,13 +199,6 @@ export default function HomePage() {
                 <a href="#catalog-section" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '15px' }}>
                   Explore Books <ArrowRight size={16} />
                 </a>
-                <button
-                  onClick={() => heroBook && handleOpenDetails(heroBook)}
-                  className="btn btn-secondary"
-                  style={{ padding: '12px 24px', fontSize: '15px' }}
-                >
-                  Shop Featured Title
-                </button>
               </div>
 
               {/* Guarantees */}
@@ -240,128 +215,64 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Column: Hero Featured Book Spotlight */}
-            {heroBook && (
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
+            {/* Right Column: Lovely Reader Welcome Card */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{
+                backgroundColor: 'var(--bg-card)',
+                padding: '40px 32px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-medium)',
+                boxShadow: 'var(--shadow-lg)',
+                maxWidth: '380px',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center'
+              }}>
                 <div style={{
-                  backgroundColor: 'var(--bg-card)',
-                  padding: '24px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-medium)',
-                  boxShadow: 'var(--shadow-lg)',
-                  maxWidth: '380px',
-                  width: '100%',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--accent-burgundy-subtle)',
+                  color: 'var(--accent-burgundy)',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  textAlign: 'center'
+                  justifyContent: 'center',
+                  marginBottom: '20px'
                 }}>
-                  <span className="badge badge-featured" style={{ marginBottom: '16px' }}>
-                    Featured Spotlight
-                  </span>
-                  <div style={{
-                    width: '180px',
-                    height: '260px',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
-                    boxShadow: 'var(--shadow-book)',
-                    marginBottom: '16px'
-                  }}>
-                    <img
-                      src={heroBook.coverImage}
-                      alt={heroBook.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                  <h3 className="heading-serif" style={{ fontSize: '18px', marginBottom: '4px' }}>
-                    {heroBook.title}
-                  </h3>
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                    By {heroBook.author} • {heroBook.category}
-                  </p>
-                  <div style={{ fontSize: '20px', fontWeight: '700', color: 'var(--accent-burgundy)', marginBottom: '16px' }}>
-                    {formatINR(heroBook.price)}
-                  </div>
-                  <button
-                    onClick={() => handleOpenDetails(heroBook)}
-                    className="btn btn-outline"
-                    style={{ width: '100%' }}
-                  >
-                    View Details & Read Sample
-                  </button>
+                  <BookOpen size={24} />
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
-      {/* ==================== B. WORKING SEARCH BAR ==================== */}
-      <section style={{
-        marginTop: '-28px',
-        position: 'relative',
-        zIndex: 10
-      }}>
-        <div className="container">
-          <form
-            onSubmit={handleSearchSubmit}
-            style={{
-              backgroundColor: 'var(--bg-card)',
-              borderRadius: '12px',
-              border: '1px solid var(--border-medium)',
-              boxShadow: 'var(--shadow-md)',
-              padding: '12px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              maxWidth: '860px',
-              margin: '0 auto'
-            }}
-          >
-            <Search size={22} style={{ color: 'var(--accent-burgundy)', flexShrink: 0 }} />
-            <input
-              type="text"
-              placeholder="Search by title (e.g. 'Clean Code'), author ('Agatha Christie'), or category..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              style={{
-                flex: 1,
-                border: 'none',
-                outline: 'none',
-                fontSize: '15px',
-                fontFamily: 'inherit',
-                backgroundColor: 'transparent'
-              }}
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchInput('');
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.delete('search');
-                  setSearchParams(newParams);
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  padding: '4px 8px'
-                }}
-              >
-                Clear
-              </button>
-            )}
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ padding: '10px 20px', fontSize: '14px', flexShrink: 0 }}
-            >
-              Search Catalog
-            </button>
-          </form>
+                <h2 className="heading-serif" style={{
+                  fontSize: '26px',
+                  lineHeight: '1.25',
+                  color: 'var(--accent-burgundy)',
+                  marginBottom: '14px',
+                  fontWeight: '700'
+                }}>
+                  Hello, Lovely Reader! ♡
+                </h2>
+
+                <div style={{
+                  width: '36px',
+                  height: '2px',
+                  backgroundColor: 'var(--accent-gold)',
+                  margin: '0 auto 16px',
+                  borderRadius: '1px'
+                }} />
+
+                <p style={{
+                  fontSize: '15px',
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.75',
+                  margin: 0
+                }}>
+                  We're so happy you're here. Take your time, explore your interests, and let your next great read find you.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
