@@ -47,6 +47,7 @@ export default function BookProductPage() {
   const [readerOpen, setReaderOpen] = useState(false);
   const [isSavedOffline, setIsSavedOffline] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [copied, setCopied] = useState(false);
 
   // Fetch Book Data
@@ -184,8 +185,6 @@ export default function BookProductPage() {
     }
   };
 
-  const [downloadingFormat, setDownloadingFormat] = useState(null);
-
   // Handle direct file download to laptop/PC
   const handleDownloadDirect = async (format = 'pdf') => {
     setDownloadingFormat(format);
@@ -224,7 +223,7 @@ export default function BookProductPage() {
           });
           localStorage.setItem('athenaeum_downloaded_ebooks', JSON.stringify(stored));
         }
-      } catch {}
+      } catch { }
 
       toast.success(`"${book.title}" (${format.toUpperCase()}) downloaded to your device!`);
     } catch (err) {
