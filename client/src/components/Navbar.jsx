@@ -40,23 +40,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Top Banner Notice */}
-      <div style={{
-        backgroundColor: 'var(--bg-secondary)',
-        borderBottom: '1px solid var(--border-light)',
-        padding: '6px 24px',
-        fontSize: '12px',
-        color: 'var(--text-secondary)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <span>Special Academic & Reader Editions • Free Pan-India Delivery on orders over ₹499</span>
-        <span style={{ fontWeight: '600', color: 'var(--accent-burgundy)' }}>
-          Prices strictly in Indian Rupees (₹)
-        </span>
-      </div>
-
       {/* Main Header */}
       <header style={{
         backgroundColor: 'var(--bg-card)',
