@@ -1,4 +1,5 @@
 import Book from '../models/Book.js';
+import { generateBookPDF, generateBookEPUB } from '../utils/ebookGenerator.js';
 
 // @desc    Get all books with search, filter, and sorting
 // @route   GET /api/books
@@ -174,6 +175,105 @@ export const getFreeBooks = async (req, res, next) => {
       count: freeBooks.length,
       books: freeBooks
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get all E-Books with search, category filtering, and sorting
+// @route   GET /api/books/ebooks
+// @access  Public
+export const getEbooks = async (req, res, next) => {
+  try {
+    const { search, category, sort } = req.query;
+
+    const query = {};
+
+    // Filter by Category
+    if (category && category !== 'All') {
+      query.category = category;
+    }
+
+    // Search query across title, author, category, description
+    if (search && search.trim() !== '') {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: searchRegex },
+        { author: searchRegex },
+        { category: searchRegex },
+        { description: searchRegex }
+      ];
+    }
+
+    // Sorting
+    let sortOptions = { rating: -1, reviewsCount: -1 }; // default popularity
+    if (sort === 'newest') {
+      sortOptions = { createdAt: -1 };
+    } else if (sort === 'title') {
+      sortOptions = { title: 1 };
+    } else if (sort === 'rating') {
+      sortOptions = { rating: -1 };
+    }
+
+    const books = await Book.find(query).sort(sortOptions);
+
+    // Dynamic metadata for each e-book
+    const formattedEbooks = books.map((book) => {
+      const sizeMb = (1.8 + (Math.abs(book.title.length * 7) % 35) / 10).toFixed(1);
+      return {
+        ...book.toObject(),
+        ebookFormats: ['PDF', 'EPUB'],
+        fileSize: `${sizeMb} MB`,
+        downloadCount: Math.abs(book.reviewsCount * 4 + 320),
+        isDigitalAvailable: true
+      };
+    });
+
+    res.json({
+      success: true,
+      count: formattedEbooks.length,
+      ebooks: formattedEbooks
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Download an authentic E-Book file directly (PDF or EPUB)
+// @route   GET /api/books/:id/download
+// @access  Public
+export const downloadEbook = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const format = (req.query.format || 'pdf').toLowerCase();
+
+    const book = await Book.findById(id);
+    if (!book) {
+      return res.status(404).json({
+        success: false,
+        message: 'The requested E-Book was not found in the catalog.'
+      });
+    }
+
+    // Clean filename for download
+    const safeTitle = (book.title || 'ebook')
+      .replace(/[^a-zA-Z0-9_\- ]/g, '')
+      .trim()
+      .replace(/\s+/g, '_');
+
+    if (format === 'epub') {
+      const epubBuffer = generateBookEPUB(book);
+      res.setHeader('Content-Type', 'application/epub+zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.epub"`);
+      res.setHeader('Content-Length', epubBuffer.length);
+      return res.send(epubBuffer);
+    } else {
+      const pdfBuffer = generateBookPDF(book);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      return res.send(pdfBuffer);
+    }
   } catch (err) {
     next(err);
   }

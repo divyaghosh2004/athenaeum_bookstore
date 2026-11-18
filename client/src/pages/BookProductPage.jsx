@@ -162,6 +162,57 @@ export default function BookProductPage() {
     }
   };
 
+  const [downloadingFormat, setDownloadingFormat] = useState(null);
+
+  // Handle direct file download to laptop/PC
+  const handleDownloadDirect = async (format = 'pdf') => {
+    setDownloadingFormat(format);
+    try {
+      const res = await api.get(`/books/${book._id}/download?format=${format}`, {
+        responseType: 'blob'
+      });
+
+      const mimeType = format === 'epub' ? 'application/epub+zip' : 'application/pdf';
+      const blob = new Blob([res.data], { type: mimeType });
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      const safeTitle = (book.title || 'ebook').replace(/[^a-zA-Z0-9_\- ]/g, '').trim().replace(/\s+/g, '_');
+      const filename = `${safeTitle}.${format}`;
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      try {
+        const stored = JSON.parse(localStorage.getItem('athenaeum_downloaded_ebooks') || '[]');
+        if (!stored.some(item => item.bookId === book._id && item.format === format.toUpperCase())) {
+          stored.unshift({
+            bookId: book._id,
+            title: book.title,
+            author: book.author,
+            coverImage: book.coverImage,
+            category: book.category,
+            description: book.description,
+            format: format.toUpperCase(),
+            downloadedAt: new Date().toISOString()
+          });
+          localStorage.setItem('athenaeum_downloaded_ebooks', JSON.stringify(stored));
+        }
+      } catch {}
+
+      toast.success(`"${book.title}" (${format.toUpperCase()}) downloaded to your device!`);
+    } catch (err) {
+      console.error('Download error:', err);
+      toast.error(`Failed to download ${format.toUpperCase()}. Please try again.`);
+    } finally {
+      setDownloadingFormat(null);
+    }
+  };
+
   // Generating mock deterministic metadata for professional presentation
   const isbn13 = `978-${Math.abs(book._id.charCodeAt(0) * 897 % 900 + 100)}-${Math.abs(book._id.charCodeAt(1) * 789 % 90000 + 10000)}-${Math.abs(book._id.charCodeAt(2) % 9 + 1)}`;
   const isbn10 = `${Math.abs(book._id.charCodeAt(3) * 654 % 900000000 + 100000000)}-${Math.abs(book._id.charCodeAt(4) % 9 + 1)}`;
@@ -292,34 +343,44 @@ export default function BookProductPage() {
                 />
               </div>
 
-              {/* Quick Reader / Offline Action */}
+              {/* Quick Reader & Device Download Actions */}
               <div style={{ width: '100%', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <button
                   onClick={() => setReaderOpen(true)}
                   className="btn btn-secondary"
                   style={{ width: '100%', padding: '11px', fontSize: '13px', fontWeight: '600' }}
                 >
-                  <BookOpen size={16} /> Read Sample Chapter
+                  <BookOpen size={16} /> Read Sample Chapter Online
                 </button>
 
-                {(book.freeDownloadStatus || book.bookType === 'digital' || book.bookType === 'both') && (
+                {/* Direct Laptop/PC E-Book Downloads */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <button
-                    onClick={handleOfflineSave}
-                    disabled={isSavedOffline || downloading}
-                    className="btn btn-outline"
-                    style={{ width: '100%', padding: '10px', fontSize: '13px' }}
+                    type="button"
+                    onClick={() => handleDownloadDirect('pdf')}
+                    disabled={downloadingFormat === 'pdf'}
+                    className="btn btn-primary"
+                    style={{ padding: '10px 8px', fontSize: '12px', fontWeight: '600' }}
+                    title="Download complete PDF book file directly to your device"
                   >
-                    {isSavedOffline ? (
-                      <>
-                        <Check size={16} color="var(--accent-green)" /> Available in Offline Storage
-                      </>
-                    ) : (
-                      <>
-                        <Download size={16} /> {downloading ? 'Downloading...' : 'Save for Offline Reading'}
-                      </>
-                    )}
+                    <Download size={14} /> {downloadingFormat === 'pdf' ? 'Saving...' : 'Download PDF'}
                   </button>
-                )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadDirect('epub')}
+                    disabled={downloadingFormat === 'epub'}
+                    className="btn btn-secondary"
+                    style={{ padding: '10px 8px', fontSize: '12px', fontWeight: '600', border: '1px solid var(--border-medium)' }}
+                    title="Download complete EPUB book file directly to your device"
+                  >
+                    <Download size={14} /> {downloadingFormat === 'epub' ? 'Saving...' : 'Download EPUB'}
+                  </button>
+                </div>
+
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  ⚡ Saved to Downloads • Read offline in any reader app
+                </div>
               </div>
             </div>
 

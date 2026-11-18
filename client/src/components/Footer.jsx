@@ -89,7 +89,7 @@ export default function Footer() {
                 <Link to="/cart" style={{ color: 'var(--text-secondary)' }}>Cart & Express Order</Link>
               </li>
               <li>
-                <Link to="/offline" style={{ color: 'var(--text-secondary)' }}>Free Public Domain E-Books</Link>
+                <Link to="/ebooks" style={{ color: 'var(--text-secondary)' }}>Digital E-Books & Downloads (PDF / EPUB)</Link>
               </li>
               <li>
                 <Link to="/account" style={{ color: 'var(--text-secondary)' }}>User Dashboard & Orders</Link>

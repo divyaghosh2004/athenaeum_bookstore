@@ -13,7 +13,10 @@ import {
   Shield,
   Calendar,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  BookDown,
+  Download,
+  Laptop
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -21,15 +24,21 @@ import { useToast } from '../context/ToastContext';
 import { formatINR } from '../utils/currency';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AuthModal from '../components/AuthModal';
+import BookReaderModal from '../components/BookReaderModal';
 import { Link } from 'react-router-dom';
 
 export default function AccountPage() {
   const { user, isAuthenticated, updateProfile, changePassword, logout } = useAuth();
   const toast = useToast();
 
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'orders', 'security'
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'orders', 'ebooks', 'security'
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ebooksList, setEbooksList] = useState([]);
+  const [ebooksLoading, setEbooksLoading] = useState(false);
+  const [downloadingEbook, setDownloadingEbook] = useState({});
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [readerBook, setReaderBook] = useState(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Edit profile state
@@ -92,8 +101,97 @@ export default function AccountPage() {
   useEffect(() => {
     if (activeTab === 'orders') {
       fetchOrders();
+    } else if (activeTab === 'ebooks') {
+      fetchMyEbooks();
     }
   }, [activeTab, isAuthenticated]);
+
+  // Fetch user's digital books & downloaded books
+  const fetchMyEbooks = async () => {
+    setEbooksLoading(true);
+    try {
+      const libraryBooks = [];
+      if (isAuthenticated) {
+        try {
+          const res = await api.get('/library');
+          if (res.data.success && res.data.library?.items) {
+            libraryBooks.push(...res.data.library.items.map(it => it.book).filter(Boolean));
+          }
+        } catch {
+          // Library fetch fallback
+        }
+      }
+
+      const localDownloads = JSON.parse(localStorage.getItem('athenaeum_downloaded_ebooks') || '[]');
+
+      const bookMap = new Map();
+      for (const b of libraryBooks) {
+        bookMap.set(b._id, {
+          _id: b._id,
+          title: b.title,
+          author: b.author,
+          coverImage: b.coverImage,
+          category: b.category,
+          description: b.description,
+          source: 'Personal Digital Library'
+        });
+      }
+      for (const d of localDownloads) {
+        if (!bookMap.has(d.bookId)) {
+          bookMap.set(d.bookId, {
+            _id: d.bookId,
+            title: d.title,
+            author: d.author,
+            coverImage: d.coverImage,
+            category: d.category,
+            description: d.description,
+            downloadedAt: d.downloadedAt,
+            format: d.format,
+            source: 'Downloaded to Device'
+          });
+        }
+      }
+
+      setEbooksList(Array.from(bookMap.values()));
+    } catch (err) {
+      console.warn('Failed to fetch user ebooks:', err);
+    } finally {
+      setEbooksLoading(false);
+    }
+  };
+
+  const handleDownloadEbook = async (book, format = 'pdf') => {
+    const key = `${book._id}-${format}`;
+    setDownloadingEbook(prev => ({ ...prev, [key]: true }));
+
+    try {
+      const res = await api.get(`/books/${book._id}/download?format=${format}`, {
+        responseType: 'blob'
+      });
+
+      const mimeType = format === 'epub' ? 'application/epub+zip' : 'application/pdf';
+      const blob = new Blob([res.data], { type: mimeType });
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      const safeTitle = (book.title || 'ebook').replace(/[^a-zA-Z0-9_\- ]/g, '').trim().replace(/\s+/g, '_');
+      const filename = `${safeTitle}.${format}`;
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success(`"${book.title}" (${format.toUpperCase()}) downloaded again to your device!`);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Download failed. Please check your connection.`);
+    } finally {
+      setDownloadingEbook(prev => ({ ...prev, [key]: false }));
+    }
+  };
 
   const handleProfileInputChange = (e) => {
     setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
@@ -324,6 +422,25 @@ export default function AccountPage() {
           }}
         >
           <ShoppingBag size={16} /> My Orders
+        </button>
+
+        <button
+          onClick={() => setActiveTab('ebooks')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: 'none',
+            background: activeTab === 'ebooks' ? 'var(--accent-burgundy)' : 'transparent',
+            color: activeTab === 'ebooks' ? '#FFF' : 'var(--text-secondary)',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
+          <BookDown size={16} /> My E-Books ({ebooksList.length})
         </button>
 
         <button
@@ -763,6 +880,203 @@ export default function AccountPage() {
         </div>
       )}
 
+      {/* ================= TAB: MY E-BOOKS ================= */}
+      {activeTab === 'ebooks' && (
+        <div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '24px',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div>
+              <h2 className="heading-serif" style={{ fontSize: '22px', marginBottom: '4px' }}>
+                My E-Books & Downloaded Volumes
+              </h2>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                Your personal digital books and offline editions. Download PDF or EPUB files to your computer anytime.
+              </p>
+            </div>
+
+            <Link to="/ebooks" className="btn btn-secondary" style={{ fontSize: '13px' }}>
+              <BookDown size={15} /> Browse More E-Books
+            </Link>
+          </div>
+
+          {ebooksLoading ? (
+            <LoadingSpinner text="Retrieving your digital volumes..." />
+          ) : ebooksList.length > 0 ? (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '20px'
+            }}>
+              {ebooksList.map((item) => {
+                const isDownloadingPdf = downloadingEbook[`${item._id}-pdf`];
+                const isDownloadingEpub = downloadingEbook[`${item._id}-epub`];
+
+                return (
+                  <div
+                    key={item._id}
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border-light)',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
+                      <Link
+                        to={`/book/${item._id}`}
+                        style={{
+                          width: '80px',
+                          height: '115px',
+                          borderRadius: '6px',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          boxShadow: 'var(--shadow-book)'
+                        }}
+                      >
+                        <img
+                          src={item.coverImage}
+                          alt={item.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </Link>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span className="badge badge-category" style={{ marginBottom: '6px', display: 'inline-block' }}>
+                          {item.category}
+                        </span>
+
+                        <Link to={`/book/${item._id}`} style={{ textDecoration: 'none' }}>
+                          <h3 className="heading-serif" style={{
+                            fontSize: '15px',
+                            color: 'var(--text-primary)',
+                            marginBottom: '4px',
+                            lineHeight: '1.3',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>
+                            {item.title}
+                          </h3>
+                        </Link>
+
+                        <p style={{
+                          fontSize: '12px',
+                          color: 'var(--text-muted)',
+                          marginBottom: '8px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {item.author}
+                        </p>
+
+                        <div style={{
+                          fontSize: '11px',
+                          color: 'var(--accent-green)',
+                          fontWeight: '600',
+                          backgroundColor: 'var(--accent-green-subtle)',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          width: 'fit-content'
+                        }}>
+                          ✓ {item.source || 'Authorized Digital Access'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions: Download PDF / EPUB */}
+                    <div style={{
+                      marginTop: 'auto',
+                      paddingTop: '12px',
+                      borderTop: '1px solid var(--border-light)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadEbook(item, 'pdf')}
+                          disabled={isDownloadingPdf}
+                          className="btn btn-primary"
+                          style={{ padding: '8px 10px', fontSize: '12px', fontWeight: '600', borderRadius: '6px' }}
+                          title="Download PDF file to your laptop or PC"
+                        >
+                          <Download size={13} /> {isDownloadingPdf ? 'Saving...' : 'Download PDF'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadEbook(item, 'epub')}
+                          disabled={isDownloadingEpub}
+                          className="btn btn-secondary"
+                          style={{ padding: '8px 10px', fontSize: '12px', fontWeight: '600', borderRadius: '6px', border: '1px solid var(--border-medium)' }}
+                          title="Download EPUB file to your laptop or PC"
+                        >
+                          <Download size={13} /> {isDownloadingEpub ? 'Saving...' : 'Download EPUB'}
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReaderBook(item);
+                            setReaderOpen(true);
+                          }}
+                          className="btn btn-outline"
+                          style={{ padding: '6px 8px', fontSize: '11px', borderRadius: '6px' }}
+                        >
+                          <BookOpen size={13} /> Read Online
+                        </button>
+
+                        <Link
+                          to={`/book/${item._id}`}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 8px', fontSize: '11px', borderRadius: '6px', textAlign: 'center' }}
+                        >
+                          <ExternalLink size={13} /> Details
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              padding: '48px 24px',
+              borderRadius: '10px',
+              border: '1px dashed var(--border-medium)',
+              textAlign: 'center',
+              maxWidth: '640px'
+            }}>
+              <BookDown size={40} style={{ color: 'var(--accent-burgundy)', marginBottom: '14px' }} />
+              <h3 className="heading-serif" style={{ fontSize: '18px', marginBottom: '8px' }}>
+                No E-Books in your account yet
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
+                Browse our comprehensive digital library to download PDF and EPUB books directly to your PC, laptop, or mobile reader.
+              </p>
+              <Link to="/ebooks" className="btn btn-primary">
+                Explore Digital E-Books
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ================= TAB 3: SECURITY ================= */}
       {activeTab === 'security' && (
         <div style={{
@@ -851,6 +1165,13 @@ export default function AccountPage() {
           </form>
         </div>
       )}
+
+      {/* Interactive E-Reader Modal */}
+      <BookReaderModal
+        book={readerBook}
+        isOpen={readerOpen}
+        onClose={() => setReaderOpen(false)}
+      />
     </div>
   );
 }
