@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Star, Eye } from 'lucide-react';
 import { formatINR } from '../utils/currency';
 import { useCart } from '../context/CartContext';
@@ -7,20 +7,24 @@ import { useCart } from '../context/CartContext';
 export default function BookCard({ book, onViewDetails }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
-  const isOutOfStock = book.stockQuantity <= 0;
+  const bookId = book?._id || book?.id;
+  const isOutOfStock = (book?.stockQuantity || 0) <= 0;
 
-  const handleDetails = (e) => {
-    if (e) e.stopPropagation();
+  const handleCardClick = (e) => {
     if (onViewDetails) {
+      e.preventDefault();
       onViewDetails(book);
-    } else {
-      navigate(`/book/${book._id}`);
     }
   };
 
   return (
     <div className="book-card">
-      <div className="book-card-cover-wrap" onClick={handleDetails} style={{ cursor: 'pointer' }}>
+      <Link
+        to={`/book/${bookId}`}
+        onClick={handleCardClick}
+        className="book-card-cover-wrap"
+        style={{ cursor: 'pointer', display: 'block', textDecoration: 'none' }}
+      >
         <img
           src={book.coverImage}
           alt={book.title}
@@ -41,7 +45,7 @@ export default function BookCard({ book, onViewDetails }) {
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -52,24 +56,29 @@ export default function BookCard({ book, onViewDetails }) {
           </div>
         </div>
 
-        <h3
-          className="heading-serif"
-          onClick={handleDetails}
-          style={{
-            fontSize: '15px',
-            lineHeight: '1.35',
-            marginBottom: '4px',
-            cursor: 'pointer',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            minHeight: '40px'
-          }}
-          title={book.title}
+        <Link
+          to={`/book/${bookId}`}
+          onClick={handleCardClick}
+          style={{ textDecoration: 'none', color: 'inherit' }}
         >
-          {book.title}
-        </h3>
+          <h3
+            className="heading-serif"
+            style={{
+              fontSize: '15px',
+              lineHeight: '1.35',
+              marginBottom: '4px',
+              cursor: 'pointer',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              minHeight: '40px'
+            }}
+            title={book.title}
+          >
+            {book.title}
+          </h3>
+        </Link>
 
         <p style={{
           fontSize: '13px',
@@ -104,14 +113,15 @@ export default function BookCard({ book, onViewDetails }) {
           </div>
 
           <div style={{ display: 'flex', gap: '6px' }}>
-            <button
-              onClick={handleDetails}
+            <Link
+              to={`/book/${bookId}`}
+              onClick={handleCardClick}
               title="View Product Page"
               className="btn btn-secondary"
               style={{ padding: '8px', borderRadius: '6px' }}
             >
               <Eye size={16} />
-            </button>
+            </Link>
             <button
               onClick={() => addToCart(book, 1)}
               disabled={isOutOfStock}

@@ -1,14 +1,14 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "destination": "https://athenaeum-bookstore.onrender.com/api/$1"
     },
     {
-      "source": "/((?!assets/|sample-books/|favicon.ico|manifest.json|sw.js).*)",
+      "source": "/((?!assets/|favicon.ico|manifest.json|sw.js).*)",
       "destination": "/index.html"
     }
   ]

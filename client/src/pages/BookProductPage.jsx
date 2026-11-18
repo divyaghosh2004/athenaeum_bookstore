@@ -61,21 +61,42 @@ export default function BookProductPage() {
         const res = await api.get(`/books/${id}`);
         if (res.data.success && res.data.book) {
           setBook(res.data.book);
-          setRelatedBooks(res.data.related || []);
+          setRelatedBooks(Array.isArray(res.data.related) ? res.data.related : []);
 
           // Check if already downloaded offline
           try {
             const offlineList = await getOfflineBooks();
-            const exists = offlineList.some(item => item.id === res.data.book._id);
+            const exists = (offlineList || []).some(item => String(item.id) === String(res.data.book._id));
             setIsSavedOffline(exists);
           } catch {
             // Ignore indexedDB check errors
           }
         } else {
-          setError(true);
+          throw new Error('Book not found in direct query');
         }
       } catch (err) {
-        console.error('Failed to fetch book product:', err);
+        console.warn('Direct book fetch note, trying catalog search fallback:', err.message);
+        // Fallback: search catalog for matching ID or title
+        try {
+          const allRes = await api.get('/books', { params: { limit: 100 } });
+          if (allRes.data.success && Array.isArray(allRes.data.books)) {
+            const found = allRes.data.books.find(
+              b => String(b._id) === String(id) || String(b.id) === String(id)
+            );
+            if (found) {
+              setBook(found);
+              setRelatedBooks(
+                allRes.data.books
+                  .filter(b => b.category === found.category && String(b._id) !== String(id))
+                  .slice(0, 4)
+              );
+              setError(false);
+              return;
+            }
+          }
+        } catch (fbErr) {
+          console.error('Catalog fallback failed:', fbErr);
+        }
         setError(true);
       } finally {
         setLoading(false);
@@ -106,13 +127,14 @@ export default function BookProductPage() {
     );
   }
 
-  const isOutOfStock = book.stockQuantity <= 0;
+  const isOutOfStock = (book?.stockQuantity || 0) <= 0;
 
   // Format pricing adjustments
   const priceMultiplier = selectedFormat === 'hardcover' ? 1.35 : selectedFormat === 'digital' ? 0.75 : 1;
-  const currentPrice = Math.round(book.price * priceMultiplier);
+  const basePrice = Number(book?.price) || 299;
+  const currentPrice = Math.round(basePrice * priceMultiplier);
   const originalMRP = Math.round(currentPrice * 1.25);
-  const savings = originalMRP - currentPrice;
+  const savings = Math.max(0, originalMRP - currentPrice);
 
   // Handle Add to Cart
   const handleAddToCart = async () => {
@@ -214,10 +236,16 @@ export default function BookProductPage() {
   };
 
   // Generating mock deterministic metadata for professional presentation
-  const isbn13 = `978-${Math.abs(book._id.charCodeAt(0) * 897 % 900 + 100)}-${Math.abs(book._id.charCodeAt(1) * 789 % 90000 + 10000)}-${Math.abs(book._id.charCodeAt(2) % 9 + 1)}`;
-  const isbn10 = `${Math.abs(book._id.charCodeAt(3) * 654 % 900000000 + 100000000)}-${Math.abs(book._id.charCodeAt(4) % 9 + 1)}`;
-  const pageCount = 280 + (Math.abs(book._id.charCodeAt(0) * 17) % 360);
-  const publishYear = 2018 + (Math.abs(book._id.charCodeAt(1) * 3) % 7);
+  const bookIdStr = String(book?._id || book?.id || id || 'book');
+  const code0 = bookIdStr.charCodeAt(0) || 65;
+  const code1 = bookIdStr.charCodeAt(1) || 66;
+  const code2 = bookIdStr.charCodeAt(2) || 67;
+  const code3 = bookIdStr.charCodeAt(3) || 68;
+  const code4 = bookIdStr.charCodeAt(4) || 69;
+  const isbn13 = `978-${Math.abs(code0 * 897 % 900 + 100)}-${Math.abs(code1 * 789 % 90000 + 10000)}-${Math.abs(code2 % 9 + 1)}`;
+  const isbn10 = `${Math.abs(code3 * 654 % 900000000 + 100000000)}-${Math.abs(code4 % 9 + 1)}`;
+  const pageCount = 280 + (Math.abs(code0 * 17) % 360);
+  const publishYear = 2018 + (Math.abs(code1 * 3) % 7);
 
   // Review breakdown calculation
   const fiveStarPct = 78;

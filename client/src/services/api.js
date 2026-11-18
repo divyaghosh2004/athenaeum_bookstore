@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// Live production Render backend URL for reliable 24/7 MongoDB database access
+const RENDER_BACKEND_URL = 'https://athenaeum-bookstore.onrender.com/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://athenaeum-bookstore.onrender.com/api'),
+  baseURL: import.meta.env.VITE_API_URL || RENDER_BACKEND_URL,
   headers: {
     'Content-Type': 'application/json'
   }
