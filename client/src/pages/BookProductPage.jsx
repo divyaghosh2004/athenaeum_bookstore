@@ -195,14 +195,14 @@ export default function BookProductPage() {
         borderBottom: '1px solid var(--border-light)',
         padding: '14px 0'
       }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-muted)' }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
           <Link to="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Home</Link>
           <ChevronRight size={14} />
           <Link to={`/?category=${encodeURIComponent(book.category)}`} style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
             {book.category}
           </Link>
           <ChevronRight size={14} />
-          <span style={{ color: 'var(--text-primary)', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '350px' }}>
+          <span style={{ color: 'var(--text-primary)', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 'min(240px, 45vw)' }}>
             {book.title}
           </span>
         </div>
@@ -239,7 +239,7 @@ export default function BookProductPage() {
 
           {/* ===== Column 1: Book Cover & Quick Badges ===== */}
           <div>
-            <div style={{
+            <div className="product-cover-card" style={{
               backgroundColor: 'var(--bg-card)',
               border: '1px solid var(--border-light)',
               borderRadius: '12px',
@@ -394,7 +394,7 @@ export default function BookProductPage() {
               <div style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>
                 Select Available Edition & Format:
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              <div className="format-selector-grid">
                 {[
                   { id: 'paperback', name: 'Paperback', price: book.price, note: 'Standard Softcover' },
                   { id: 'hardcover', name: 'Hardcover', price: Math.round(book.price * 1.35), note: 'Collector Clothbound' },
@@ -444,10 +444,7 @@ export default function BookProductPage() {
             </div>
 
             {/* Quick Spec Highlights Grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '12px',
+            <div className="quick-specs-grid" style={{
               borderTop: '1px solid var(--border-light)',
               borderBottom: '1px solid var(--border-light)',
               padding: '16px 0',
@@ -635,11 +632,7 @@ export default function BookProductPage() {
         {/* ================= Detailed Content Tabs ================= */}
         <div id="tabs-section" style={{ marginTop: '56px' }}>
           {/* Tab Navigation Headers */}
-          <div style={{
-            display: 'flex',
-            borderBottom: '2px solid var(--border-light)',
-            gap: '8px'
-          }}>
+          <div className="product-tabs-header">
             {[
               { id: 'overview', label: 'Synopsis & Overview' },
               { id: 'details', label: 'Book Specifications' },
@@ -668,7 +661,7 @@ export default function BookProductPage() {
           </div>
 
           {/* Tab Content Panes */}
-          <div style={{
+          <div className="product-tab-content" style={{
             backgroundColor: 'var(--bg-card)',
             border: '1px solid var(--border-light)',
             borderTop: 'none',
@@ -706,7 +699,7 @@ export default function BookProductPage() {
                 <h3 className="heading-serif" style={{ fontSize: '22px', marginBottom: '20px', color: 'var(--text-primary)' }}>
                   Bibliographic Details & Technical Specifications
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', maxWidth: '800px' }}>
+                <div className="specs-details-grid">
                   {[
                     { label: 'Full Title', value: book.title },
                     { label: 'Primary Author', value: book.author },
@@ -773,12 +766,7 @@ export default function BookProductPage() {
                     <LoadingSpinner text="Loading reviews..." size="sm" />
                   </div>
                 ) : (
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'minmax(250px, 320px) 1fr',
-                    gap: '40px',
-                    marginBottom: '36px'
-                  }}>
+                  <div className="reviews-layout-grid">
                   {/* Rating Breakdown Card */}
                   <div style={{
                     backgroundColor: 'var(--bg-secondary)',

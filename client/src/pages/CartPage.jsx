@@ -238,12 +238,7 @@ export default function CartPage() {
       </div>
 
       {items.length > 0 ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr minmax(300px, 380px)',
-          gap: '36px',
-          alignItems: 'start'
-        }}>
+        <div className="cart-layout-grid">
           {/* Left Column: Cart Items List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {items.map((item) => {
@@ -256,6 +251,7 @@ export default function CartPage() {
               return (
                 <div
                   key={bookId}
+                  className="cart-item-card"
                   style={{
                     backgroundColor: 'var(--bg-card)',
                     borderRadius: '10px',

@@ -281,13 +281,7 @@ export default function AccountPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        marginBottom: '28px',
-        borderBottom: '1px solid var(--border-light)',
-        paddingBottom: '12px'
-      }}>
+      <div className="account-tabs-header">
         <button
           onClick={() => setActiveTab('profile')}
           style={{

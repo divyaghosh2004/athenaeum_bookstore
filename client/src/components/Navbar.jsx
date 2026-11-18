@@ -49,7 +49,7 @@ export default function Navbar() {
         zIndex: 50,
         boxShadow: 'var(--shadow-sm)'
       }}>
-        <div className="container" style={{
+        <div className="container navbar-container" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -58,7 +58,7 @@ export default function Navbar() {
         }}>
           {/* Brand Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-            <div style={{
+            <div className="brand-logo-icon" style={{
               width: '42px',
               height: '42px',
               borderRadius: '8px',
@@ -67,12 +67,13 @@ export default function Navbar() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(128, 0, 32, 0.25)'
+              boxShadow: '0 2px 8px rgba(128, 0, 32, 0.25)',
+              flexShrink: 0
             }}>
               <BookOpen size={24} />
             </div>
             <div>
-              <span className="heading-serif" style={{
+              <span className="heading-serif brand-title" style={{
                 fontSize: '22px',
                 fontWeight: '700',
                 letterSpacing: '-0.02em',
@@ -82,7 +83,7 @@ export default function Navbar() {
               }}>
                 ATHENAEUM
               </span>
-              <span style={{
+              <span className="brand-subtitle" style={{
                 fontSize: '10px',
                 letterSpacing: '0.14em',
                 textTransform: 'uppercase',
@@ -237,7 +238,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => setAuthModalOpen(true)}
-                className="btn btn-primary"
+                className="btn btn-primary sign-in-btn"
                 style={{ fontSize: '13px', padding: '8px 16px' }}
               >
                 Sign In
